@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:login_register_app/screens/register_screen.dart';
 import 'package:login_register_app/screens/home_screen.dart';
+import 'package:login_register_app/screens/register_screen.dart';
 import 'package:login_register_app/widgets/custom_button.dart';
 import 'package:login_register_app/widgets/custom_textfield.dart';
 
@@ -14,7 +14,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController userController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
   // JSON decode function
@@ -26,10 +26,10 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // LOGIN FUNCTION (multi-user)
+  // LOGIN FUNCTION WITH ID
   Future<void> loginUser() async {
     final prefs = await SharedPreferences.getInstance();
-    final usersJson = prefs.getString('users'); // list of users
+    final usersJson = prefs.getString('users'); // List of users
 
     if (usersJson == null || usersJson.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -39,26 +39,30 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     final List<dynamic> users = decodeUsers(usersJson);
-    bool found = false;
+    Map<String, dynamic>? currentUser;
 
     for (var user in users) {
-      if (user['username'] == usernameController.text.trim() &&
+      if ((user['username'] == userController.text.trim() ||
+          user['email'] == userController.text.trim()) &&
           user['password'] == passwordController.text.trim()) {
-        found = true;
+        currentUser = Map<String, dynamic>.from(user);
         break;
       }
     }
 
-    if (found) {
+    if (currentUser != null) {
+      // Saqlaymiz: logged_in_user_id
+      await prefs.setInt('logged_in_user_id', currentUser['id']);
+
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(
+          builder: (context) => HomeScreen(),
+        ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Username yoki parol xato"),
-        ),
+        const SnackBar(content: Text("Username/Email yoki parol xato")),
       );
     }
   }
@@ -75,15 +79,11 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const SizedBox(height: 40),
-
-                // IMAGE
                 Image.asset(
                   'assets/login.png',
                   height: 160,
                 ),
-
                 const SizedBox(height: 15),
-
                 const Text(
                   "Login into app",
                   style: TextStyle(
@@ -92,50 +92,36 @@ class _LoginScreenState extends State<LoginScreen> {
                     color: Colors.white,
                   ),
                 ),
-
                 const SizedBox(height: 10),
-
                 const Text(
-                  "Lorem ipsum dolor sit amet, consectetur adipiscing elit. "
-                      "Nullam tincidunt ante lacus, eu pretium purus.",
+                  "Enter your username or email and password to login.",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white70,
                     fontSize: 14,
                   ),
                 ),
-
                 const SizedBox(height: 30),
-
                 CustomTextField(
-                  controller: usernameController,
-                  hintText: 'Username',
+                  controller: userController,
+                  hintText: 'Username or Email',
                 ),
-
                 const SizedBox(height: 15),
-
                 CustomTextField(
                   controller: passwordController,
                   hintText: 'Password',
                   obscureText: true,
                 ),
-
                 const SizedBox(height: 25),
-
                 CustomButton(
                   text: "Login",
-                  onPressed: () {
-                    loginUser();
-                  },
+                  onPressed: loginUser,
                 ),
-
                 const SizedBox(height: 10),
-
                 const Text(
                   "or",
                   style: TextStyle(color: Colors.white70),
                 ),
-
                 TextButton(
                   onPressed: () {
                     Navigator.push(
@@ -153,7 +139,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 20),
               ],
             ),
