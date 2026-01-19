@@ -5,7 +5,6 @@ import 'package:login_register_app/screens/settings_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:login_register_app/screens/login_screen.dart';
 import 'package:login_register_app/screens/profile_screen.dart';
-
 import 'edit_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -379,4 +378,3 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 }
-
